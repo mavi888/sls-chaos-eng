@@ -11,6 +11,8 @@ provider:
     PENDING_ORDER_QUEUE_NAME: sls-chaos-eng-PendingOrdersQueue-dev
     COMPLETED_ORDER_TABLE: sls-chaos-eng-CompletedOrderTable-dev
     THUNDRA_KEY: ${ssm:/sls-chaos-eng/thundraKey}
+    thundra_agent_lambda_trace_span_listener: FilteringSpanListener[listener=LatencyInjectorSpanListener,config.delay=8000,filter1.className=AWS-SQS,filter1.operationName=sls-chaos-eng-PendingOrdersQueue-dev,filter1.tag.operation.type=WRITE]
+
 
   iamRoleStatements:
     - Effect: "Allow"

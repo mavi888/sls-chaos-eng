@@ -1,41 +1,6 @@
 'use strict';
 
-const thundra = require("@thundra/core");
-
-const thundraWrapper = thundra({
-    apiKey: process.env.THUNDRA_KEY
-});
-
-//Import Statements;
-const FilteringSpanListener = thundra.listeners.FilteringSpanListener;
-const LatencyInjectorSpanListener = thundra.listeners.LatencyInjectorSpanListener;
-const StandardSpanFilterer = thundra.listeners.StandardSpanFilterer;
-const SpanFilter = thundra.listeners.SpanFilter;
-
-const filter = new SpanFilter();
-filter.className = 'AWS-SQS';
-filter.operationName =  'sls-chaos-eng-PendingOrdersQueue-dev'
-filter.tags = {
-	'operation.type': 'WRITE'
-};
-
-// Create a StandardSpanFilterer with one filter
-const filterer = new StandardSpanFilterer([filter]);
-
-const latencyInjectorSpanListenerConfig = {
-    delay: 8000,
-    injectOnFinish: true
-};
-
-// Create a ErrorInjectorSpanListener with one filter
-const latencyInjectorSpanListener = new LatencyInjectorSpanListener(latencyInjectorSpanListenerConfig);
-
-// Create a FilteringSpanListener with spanFilterer and listener
-const filteringListener = new FilteringSpanListener();
-filteringListener.listener = latencyInjectorSpanListener;
-filteringListener.spanFilterer = filterer;
-
-thundra.tracer().addSpanListener(filteringListener);
+const thundra = require("@thundra/core")({ apiKey: process.env.THUNDRA_KEY });
 
 const uuidv1 = require('uuid/v1');
 const AWS = require('aws-sdk');
@@ -45,7 +10,7 @@ const orderMetadataManager = require('./orderMetadataManager');
 var sqs = new AWS.SQS({ region: process.env.REGION });
 const QUEUE_URL = process.env.PENDING_ORDER_QUEUE;
 
-module.exports.hacerPedido = thundraWrapper((event, context, callback) => {
+module.exports.hacerPedido = thundra((event, context, callback) => {
 	console.log('HacerPedido fue llamada');
 
 	const body = JSON.parse(event.body);
@@ -76,7 +41,7 @@ module.exports.hacerPedido = thundraWrapper((event, context, callback) => {
 	});
 });
 
-module.exports.prepararPedido = thundraWrapper((event, context, callback) => {
+module.exports.prepararPedido = thundra((event, context, callback) => {
 	console.log('Preparar pedido fue llamada');
 
 	const order = JSON.parse(event.Records[0].body);
@@ -91,7 +56,7 @@ module.exports.prepararPedido = thundraWrapper((event, context, callback) => {
 		});
 });
 
-module.exports.enviarPedido = thundraWrapper((event, context, callback) => {
+module.exports.enviarPedido = thundra((event, context, callback) => {
 	console.log('enviarPedido fue llamada');
 
 	const record = event.Records[0];
@@ -115,7 +80,7 @@ module.exports.enviarPedido = thundraWrapper((event, context, callback) => {
 	}
 });
 
-module.exports.estadoPedido = thundraWrapper((event, context, callback) => {
+module.exports.estadoPedido = thundra((event, context, callback) => {
 	console.log('Estado pedido fue llamado');
 
 	const orderId = event.pathParameters && event.pathParameters.orderId;
