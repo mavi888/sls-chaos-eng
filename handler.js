@@ -8,33 +8,31 @@ const thundraWrapper = thundra({
 
 //Import Statements;
 const FilteringSpanListener = thundra.listeners.FilteringSpanListener;
-const ErrorInjectorSpanListener = thundra.listeners.ErrorInjectorSpanListener;
+const LatencyInjectorSpanListener = thundra.listeners.LatencyInjectorSpanListener;
 const StandardSpanFilterer = thundra.listeners.StandardSpanFilterer;
 const SpanFilter = thundra.listeners.SpanFilter;
 
 const filter = new SpanFilter();
-filter.className = 'AWS-DynamoDB';
-filter.operationName =  'sls-chaos-eng-CompletedOrderTable-dev'
+filter.className = 'AWS-SQS';
+filter.operationName =  'sls-chaos-eng-PendingOrdersQueue-dev'
 filter.tags = {
-    'db.type' :'aws-dynamodb',
-    'operation.type': 'READ'
+	'operation.type': 'WRITE'
 };
 
 // Create a StandardSpanFilterer with one filter
 const filterer = new StandardSpanFilterer([filter]);
 
-const errorInjectorListenerConfig = {
-	errorType: 'DynamoError',
-    errorMessage: 'Kaboom!!! DynamoDB crashed.',
-    injectOnFinish: false
+const latencyInjectorSpanListenerConfig = {
+    delay: 8000,
+    injectOnFinish: true
 };
 
 // Create a ErrorInjectorSpanListener with one filter
-const errorInjectorListener = new ErrorInjectorSpanListener(errorInjectorListenerConfig);
+const latencyInjectorSpanListener = new LatencyInjectorSpanListener(latencyInjectorSpanListenerConfig);
 
 // Create a FilteringSpanListener with spanFilterer and listener
 const filteringListener = new FilteringSpanListener();
-filteringListener.listener = errorInjectorListener;
+filteringListener.listener = latencyInjectorSpanListener;
 filteringListener.spanFilterer = filterer;
 
 thundra.tracer().addSpanListener(filteringListener);
