@@ -1,4 +1,4 @@
-service: monitoring-tests
+service: sls-chaos-eng
 
 provider:
   name: aws
@@ -8,8 +8,9 @@ provider:
     REGION: ${self:provider.region}
     PENDING_ORDER_QUEUE:
       Ref: PendingOrdersQueue
-    PENDING_ORDER_QUEUE_NAME: PendingOrdersQueue-dev
-    COMPLETED_ORDER_TABLE: CompletedOrderTable-dev
+    PENDING_ORDER_QUEUE_NAME: sls-chaos-eng-PendingOrdersQueue-dev
+    COMPLETED_ORDER_TABLE: sls-chaos-eng-CompletedOrderTable-dev
+    THUNDRA_KEY: ${ssm:/sls-chaos-eng/thundraKey}
 
   iamRoleStatements:
     - Effect: "Allow"
@@ -32,6 +33,9 @@ functions:
       - http:
           method: post
           path: pedido
+    layers:
+      - arn:aws:lambda:${self:provider.region}:269863060030:layer:thundra-lambda-node-layer:12
+
   prepararPedido:
     handler: handler.prepararPedido
     events:
@@ -41,6 +45,9 @@ functions:
               - PendingOrdersQueue
               - Arn
           batchSize: 1
+    layers:
+      - arn:aws:lambda:${self:provider.region}:269863060030:layer:thundra-lambda-node-layer:12
+
   enviarPedido:
     handler: handler.enviarPedido
     events:
@@ -52,12 +59,18 @@ functions:
             Fn::GetAtt:
               - CompletedOrdersTable
               - StreamArn
+    layers:
+      - arn:aws:lambda:${self:provider.region}:269863060030:layer:thundra-lambda-node-layer:12
+
   estadoPedido:
     handler: handler.estadoPedido
     events:
       - http:
           method: get
           path: pedido/{orderId}
+    layers:
+      - arn:aws:lambda:${self:provider.region}:269863060030:layer:thundra-lambda-node-layer:12
+
 
 resources:
   Resources:
